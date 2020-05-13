@@ -1,0 +1,56 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from fredapi import Fred
+from sklearn.linear_model import LinearRegression
+
+# Import data from St. Louis Fed
+fred = Fred(api_key='140fb55253092f10a60ea0519d18243e')
+fxdata = fred.get_series('DEXUSEU')
+# fxdata.plot()
+# plt.show()
+
+# Format Data
+fxdata = fxdata.to_frame()
+fxdata = fxdata.reset_index(drop=True)
+fxdata = fxdata.dropna()
+
+# Get Lagged Values
+y = fxdata[1:len(fxdata)]
+x = fxdata[0:(len(fxdata)-1)]
+
+# Fit Model
+lm = LinearRegression()
+lm.fit(x, y)
+
+# Get coefficients and residuals
+y_pred = lm.predict(x)
+res = np.var(y_pred-y)
+res = float(res)
+a = lm.intercept_[0]
+b = lm.coef_[0][0]
+
+# Convert to OU Parameter Values (Here the time step is assumed to be 1)
+# Time step units correspond to the time increment in the imported data
+kappa = -np.log(b)
+theta = a/(1-b)
+sigma = np.sqrt((2*res*kappa)/(1-b**2))
+
+# Sample Simulation of OU Process using Euler Scheme
+
+dt = 1  # Time step.
+T = 5000  # Total time.
+n = int(T/dt)  # Number of time steps.
+sqrtdt = np.sqrt(dt)  # Sqrt time step
+t = np.linspace(0., T, n)  # Vector of times.
+x = np.zeros(n)  # Price Path Vector
+x[0] = theta  # Initial Value
+
+# Simulation
+for i in range(n - 1):
+    x[i + 1] = x[i] + kappa * (theta - x[i]) * dt + sigma * sqrtdt * np.random.randn()
+print(x)
+
+# Plot
+fig, ax = plt.subplots(1, 1, figsize=(8, 4))
+ax.plot(t, x, lw=2)
+plt.show()
