@@ -7,7 +7,7 @@ c = 0;
 iter = 1e7;
 
 
-% Q grid
+% Q grid - inventory
 Qmax = 10;
 Qmin = -10;
 q_grid = [Qmin:Qmax]';

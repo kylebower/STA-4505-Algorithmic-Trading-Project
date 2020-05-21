@@ -13,27 +13,28 @@ np.random.seed(1)
 epsilon = 0.9  # greedy police
 alpha = 0.1  # learning rate
 gamma = 0.9  # discount factor
-niter = int(1e4)
+niter = int(1e4)  # number of iterations
 NT = int(10)  # 10 periods
 dt = 1  # send child order each dt
 dT = 60  # decisions are made at each dT
 
 kappa = 1  # second time scale
-theta = 1
+theta = 1  # mean
 sigma = 0.02
-phi = 1;
-c = 0;
+phi = 1
+c = 0  # penalty
 
-Qmax = 10;
-Qmin = -10;
+Qmax = 10
+Qmin = -10
 q_grid = list(range(Qmin, Qmax + 1))
 
 a_grid = list(range(-5, 6))
+a_grid = list(range(-2, 3))
 
 s_min = theta - 5 * sigma / np.sqrt(2 * kappa)
 s_max = theta + 5 * sigma / np.sqrt(2 * kappa)
-Ns = 51;
-ds = (s_max - s_min) / (Ns - 1);
+Ns = 51
+ds = (s_max - s_min) / (Ns - 1)
 s_grid = np.arange(s_min, s_max, ds).tolist()
 
 
@@ -80,7 +81,7 @@ def adms_actions(q):
     return list(range(lowerbound, upperbound + 1))
 
 
-#
+# choose epsilon-greedy action
 def get_action(s, T, q, q_table, epsilon):
     """
     return the epsilon_greedy action given a state
@@ -148,11 +149,12 @@ def get_last_feedback(s, T, q, a):
     return s_grid[abs(s - np.array(s_grid)).argmax()], int(q), period_reward
 
 
+# simulate one mean reverting step
 def SimMRStep(S0, q0, x, kappa, theta, sigma, dt, phi):
-    S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn();
-    q1 = q0 + x;
-    phi = 0;
-    reward = q1 * (S1 - S0) - phi * np.square(x);
+    S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn()
+    q1 = q0 + x
+    phi = 0
+    reward = q1 * (S1 - S0) - phi * np.square(x)
     return reward, q1, S1
 
 
