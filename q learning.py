@@ -24,19 +24,19 @@ dT = 60  # decisions are made at each dT
 kappa = 1  # second time scale
 theta = 1
 sigma = 0.02
-phi = 1;
-c = 0;
+phi = 1
+c = 0
 
-Qmax = 10;
-Qmin = -10;
+Qmax = 10
+Qmin = -10
 q_grid = list(range(Qmin, Qmax + 1))
 
 a_grid = list(range(-5, 6))
 
 s_min = theta - 5 * sigma / np.sqrt(2 * kappa)
 s_max = theta + 5 * sigma / np.sqrt(2 * kappa)
-Ns = 51;
-ds = (s_max - s_min) / (Ns - 1);
+Ns = 51
+ds = (s_max - s_min) / (Ns - 1)
 s_grid = np.arange(s_min, s_max+ds/2, ds).tolist()
 
 
@@ -152,10 +152,10 @@ def get_last_feedback(s, T, q, a):
 
 
 def SimMRStep(S0, q0, x, kappa, theta, sigma, dt, phi):
-    S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn();
-    q1 = q0 + x;
-    phi = 0;
-    reward = q1 * (S1 - S0) - phi * np.square(x);
+    S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn()
+    q1 = q0 + x
+    phi = 0
+    reward = q1 * (S1 - S0) - phi * np.square(x)
     return reward, q1, S1
 
 
@@ -205,12 +205,13 @@ def q_learning():
         # q = q_
     return q_table, s_matrix, q_matrix, a_matrix
 
+
 def get_optimal_actions(T):
     optimal_action_table = np.zeros([len(s_grid),len(q_grid)])
-    for i in range (np.shape(q_table)[0]):
-        for j in range (np.shape(q_table)[2]):
-            optimal_action_table[i,j]= a_grid[np.argmax(q_table[:,T,:,:],axis=-1)[i,j]]
-    return pd.DataFrame(optimal_action_table, columns = q_grid, index=s_grid)
+    for i in range(np.shape(q_table)[0]):
+        for j in range(np.shape(q_table)[2]):
+            optimal_action_table[i, j] = a_grid[np.argmax(q_table[:, T, :, :], axis=-1)[i, j]]
+    return pd.DataFrame(optimal_action_table, columns=q_grid, index=s_grid)
 
 
 def plot_actions(T):
@@ -224,7 +225,6 @@ def plot_actions(T):
     plt.xlabel("Inventory")
     plt.ylabel("Price")
     plt.show()
-
 
 
 if __name__ == '__main__':
