@@ -7,14 +7,11 @@ import matplotlib.pyplot as plt
 # Generate sample data
 data = np.random.rand(10, 10)
 print(data)
-print(-data)
-# Columns are x axis (inventory) and rows are y axis (price)
-# I'm using 'coolwarm' here which plots low values in blue and
-# large values in red so for our purposes we want to switch
-# this and we plot -data. (There's probably a better colourmap we can find)
 
-# heat_map = sb.heatmap(-data, cmap='coolwarm')
-heat_map = sb.palplot(sb.diverging_palette(20, 220, n=10))
+# Columns are x axis (inventory) and rows are y axis (price)
+
+cmap = sb.diverging_palette(20, 220, as_cmap=True)
+heat_map = sb.heatmap(data, cmap=cmap)
 plt.xlabel("Inventory")
 plt.ylabel("Price")
 plt.show()
