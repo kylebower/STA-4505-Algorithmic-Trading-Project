@@ -165,8 +165,8 @@ def q_learning():
     s_matrix, q_matrix, a_matrix = init_state_matrices()
     q_table = init_q_table(len(s_grid), NT, len(q_grid), len(a_grid))
     for episode in range(int(niter)):
-        epsilon = 1 - 1 / 1 + episode  # greedy police
-        alpha = 1 / 1 + episode
+        epsilon = 1 - 1 / (1 + episode)  # greedy police
+        alpha = 1 / (1 + episode)
         T = 0
         s = np.random.choice(s_grid)
         q = np.random.choice(q_grid)
@@ -207,7 +207,7 @@ def q_learning():
 
 
 def get_optimal_actions(T):
-    optimal_action_table = np.zeros([len(s_grid),len(q_grid)])
+    optimal_action_table = np.zeros([len(s_grid), len(q_grid)])
     for i in range(np.shape(q_table)[0]):
         for j in range(np.shape(q_table)[2]):
             optimal_action_table[i, j] = a_grid[np.argmax(q_table[:, T, :, :], axis=-1)[i, j]]
