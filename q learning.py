@@ -10,23 +10,22 @@ import pandas as pd
 import seaborn as sns
 
 
-
 np.random.seed(1)
 
 # global variables
 epsilon = 0.9  # greedy police
 alpha = 0.1  # learning rate
 gamma = 0.9  # discount factor
-niter = int(1e3)
+niter = int(1e3)  # number of iterations
 NT = int(10)  # 10 periods
 dt = 1  # send child order each dt
 dT = 60  # decisions are made at each dT
 
 kappa = 1  # second time scale
-theta = 1
+theta = 1  # mean
 sigma = 0.02
 phi = 1
-c = 0
+c = 0  # penalty
 
 Qmax = 10
 Qmin = -10
@@ -84,7 +83,7 @@ def adms_actions(q):
     return list(range(lowerbound, upperbound + 1))
 
 
-#
+# choose epsilon-greedy action
 def get_action(s, T, q, q_table, epsilon):
     """
     return the epsilon_greedy action given a state
@@ -152,6 +151,7 @@ def get_last_feedback(s, T, q, a):
     return s_grid[abs(s - np.array(s_grid)).argmax()], int(q), period_reward
 
 
+# simulate mean reverting step
 def SimMRStep(S0, q0, x, kappa, theta, sigma, dt, phi):
     S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn()
     q1 = q0 + x
