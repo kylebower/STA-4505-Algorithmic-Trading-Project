@@ -5,7 +5,6 @@
 """
 import numpy as np
 import matplotlib.pyplot as plt
-import random
 import pandas as pd
 import seaborn as sns
 
@@ -97,7 +96,7 @@ def get_action(s, T, q, q_table, epsilon):
     :return: epsilon_greedy action
     :rtype: int
     """
-    if (np.random.uniform() > epsilon):
+    if np.random.uniform() > epsilon:
         action = np.random.choice(adms_actions(q))
     else:
         adms_act_index = np.where(np.isin(a_grid, adms_actions(q)))[0]
