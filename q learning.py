@@ -5,10 +5,8 @@
 """
 import numpy as np
 import matplotlib.pyplot as plt
-import random
 import pandas as pd
 import seaborn as sns
-
 
 
 np.random.seed(1)
@@ -23,21 +21,21 @@ dt = 1  # send child order each dt
 dT = 60  # decisions are made at each dT
 
 kappa = 1  # second time scale
-theta = 1
+theta = 1  # mean
 sigma = 0.02
-phi = 1;
-c = 0;
+phi = 1
+c = 0  # penalty
 
-Qmax = 10;
-Qmin = -10;
+Qmax = 10
+Qmin = -10
 q_grid = list(range(Qmin, Qmax + 1))
 
 a_grid = list(range(-5, 6))
 
 s_min = theta - 5 * sigma / np.sqrt(2 * kappa)
 s_max = theta + 5 * sigma / np.sqrt(2 * kappa)
-Ns = 51;
-ds = (s_max - s_min) / (Ns - 1);
+Ns = 51
+ds = (s_max - s_min) / (Ns - 1)
 s_grid = np.arange(s_min, s_max+ds/2, ds).tolist()
 
 
@@ -84,7 +82,7 @@ def adms_actions(q):
     return list(range(lowerbound, upperbound + 1))
 
 
-#
+# choose epsilon-greedy action
 def get_action(s, T, q, q_table, epsilon):
     """
     return the epsilon_greedy action given a state
@@ -153,10 +151,10 @@ def get_last_feedback(s, T, q, a):
 
 
 def SimMRStep(S0, q0, x, kappa, theta, sigma, dt, phi):
-    S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn();
-    q1 = q0 + x;
-    phi = 0;
-    reward = q1 * (S1 - S0) - phi * np.square(x);
+    S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn()
+    q1 = q0 + x
+    phi = 0
+    reward = q1 * (S1 - S0) - phi * np.square(x)
     return reward, q1, S1
 
 
@@ -166,8 +164,8 @@ def q_learning():
     s_matrix, q_matrix, a_matrix = init_state_matrices()
     q_table = init_q_table(len(s_grid), NT, len(q_grid), len(a_grid))
     for episode in range(int(niter)):
-        epsilon = 1 - 1 / 1 + episode  # greedy police
-        alpha = 1 / 1 + episode
+        epsilon = 1 / (1 + episode)  # greedy police
+        alpha = 1 / (1 + episode)
         T = 0
         s = np.random.choice(s_grid)
         q = np.random.choice(q_grid)
@@ -210,8 +208,8 @@ def get_optimal_actions(T):
     optimal_action_table = np.zeros([len(s_grid),len(q_grid)])
     for i in range (np.shape(q_table)[0]):
         for j in range (np.shape(q_table)[2]):
-            optimal_action_table[i,j]= a_grid[np.argmax(q_table[:,T,:,:],axis=-1)[i,j]]
-    return pd.DataFrame(optimal_action_table, columns = q_grid, index=s_grid)
+            optimal_action_table[i, j] = a_grid[np.argmax(q_table[:, T, :, :], axis=-1)[i, j]]
+    return pd.DataFrame(optimal_action_table, columns=q_grid, index=s_grid)
 
 
 def plot_actions(T):
