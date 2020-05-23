@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-@author: YC
+@author: Yichao Chen
 """
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 import pandas as pd
 import seaborn as sns
+
 
 
 np.random.seed(1)
@@ -15,27 +17,27 @@ np.random.seed(1)
 epsilon = 0.9  # greedy police
 alpha = 0.1  # learning rate
 gamma = 0.9  # discount factor
-niter = int(1e3)
+niter = int(5*1e4)
 NT = int(10)  # 10 periods
 dt = 1  # send child order each dt
 dT = 60  # decisions are made at each dT
 
 kappa = 1  # second time scale
-theta = 1  # mean
+theta = 1
 sigma = 0.02
-phi = 1
-c = 0  # penalty
+phi = 0.02;
+c = 100;
 
-Qmax = 10
-Qmin = -10
+Qmax = 10;
+Qmin = -10;
 q_grid = list(range(Qmin, Qmax + 1))
 
 a_grid = list(range(-5, 6))
 
 s_min = theta - 5 * sigma / np.sqrt(2 * kappa)
 s_max = theta + 5 * sigma / np.sqrt(2 * kappa)
-Ns = 51
-ds = (s_max - s_min) / (Ns - 1)
+Ns = 51;
+ds = (s_max - s_min) / (Ns - 1);
 s_grid = np.arange(s_min, s_max+ds/2, ds).tolist()
 
 
@@ -82,7 +84,7 @@ def adms_actions(q):
     return list(range(lowerbound, upperbound + 1))
 
 
-# choose epsilon-greedy action
+#
 def get_action(s, T, q, q_table, epsilon):
     """
     return the epsilon_greedy action given a state
@@ -145,16 +147,21 @@ def get_last_feedback(s, T, q, a):
     period_reward = 0
     for t in range(1, dT + 1):
         x = a / dT  # average order size per dt
-        reward_, q, s = SimMRStep(s, q, x, kappa, theta, sigma, dt, 10 * phi)  # last period gets penalized by 10 times
+        reward_, q, s = SimMRStep(s, q, x, kappa, theta, sigma, dt, phi)  # last period gets penalized by 10 times
         period_reward += reward_
+    reward_, q_, s_ = SimMRStep(s, q, x, kappa, theta, sigma, dt, phi)
+    terminal_reward = q * (s_- s) - c * phi * np.square(q_)
+    period_reward += terminal_reward
     return s_grid[abs(s - np.array(s_grid)).argmin()], int(q), period_reward
 
 
 def SimMRStep(S0, q0, x, kappa, theta, sigma, dt, phi):
-    S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn()
-    q1 = q0 + x
-    phi = 0
-    reward = q1 * (S1 - S0) - phi * np.square(x)
+    S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn();
+    #S1 = S0 + kappa*(theta-S0)* dt + sigma * np.sqrt(dt) * np.random.randn()
+    #x(i+1) = x(i)+th*(mu-x(i))*dt+sig*sqrt(dt)*randn
+    q1 = q0 + x;
+    #phi = 0;
+    reward = q1 * (S1 - S0) - phi * np.square(x);
     return reward, q1, S1
 
 
@@ -164,14 +171,14 @@ def q_learning():
     s_matrix, q_matrix, a_matrix = init_state_matrices()
     q_table = init_q_table(len(s_grid), NT, len(q_grid), len(a_grid))
     for episode in range(int(niter)):
-        epsilon = 1 / (1 + episode)  # greedy police
-        alpha = 1 / (1 + episode)
+        print('episode'+ str(episode))
+        epsilon = 1 - 1 /(1 + episode)  # greedy police
+        alpha = 1 /(1 + episode)
         T = 0
         s = np.random.choice(s_grid)
         q = np.random.choice(q_grid)
         while T < NT - 1:
             a = get_action(s, T, q, q_table, epsilon)  # choose epsilon-greedy action
-            print(adms_actions(q))
             s_, q_, r = get_feedback(s, T, q, a)  # get next state and the current reward
             q_predict = q_table[s_grid.index(s), T, q_grid.index(q), a_grid.index(a)]  # get Q(s,T,q,a)
             q_target = r + gamma * q_table[s_grid.index(s_), T + 1, q_grid.index(q_), adms_actions_indeces(
@@ -208,8 +215,8 @@ def get_optimal_actions(T):
     optimal_action_table = np.zeros([len(s_grid),len(q_grid)])
     for i in range (np.shape(q_table)[0]):
         for j in range (np.shape(q_table)[2]):
-            optimal_action_table[i, j] = a_grid[np.argmax(q_table[:, T, :, :], axis=-1)[i, j]]
-    return pd.DataFrame(optimal_action_table, columns=q_grid, index=s_grid)
+            optimal_action_table[i,j]= a_grid[np.argmax(q_table[:,T,:,:],axis=-1)[i,j]]
+    return pd.DataFrame(optimal_action_table, columns = q_grid, index=s_grid)
 
 
 def plot_actions(T):
@@ -228,5 +235,6 @@ def plot_actions(T):
 
 if __name__ == '__main__':
     q_table, s_matrix, q_matrix, a_matrix = q_learning()
-    print(q_table)
-    plot_actions(5)
+    plt.hist(q_matrix[:-1,-1])
+    plt.xlabel("frequency")
+    plt.ylabel("terminal inventory")
