@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 @author: Yichao Chen
@@ -9,15 +8,13 @@ import random
 import pandas as pd
 import seaborn as sns
 
-
-
 np.random.seed(1)
 
 # global variables
 epsilon = 0.9  # greedy police
 alpha = 0.1  # learning rate
 gamma = 0.9  # discount factor
-niter = int(5*1e4)
+niter = int(1e4)
 NT = int(10)  # 10 periods
 dt = 1  # send child order each dt
 dT = 60  # decisions are made at each dT
@@ -25,20 +22,27 @@ dT = 60  # decisions are made at each dT
 kappa = 1  # second time scale
 theta = 1
 sigma = 0.02
-phi = 0.02;
-c = 100;
+phi = 0.000001;
+c = 1000;
 
 Qmax = 10;
 Qmin = -10;
 q_grid = list(range(Qmin, Qmax + 1))
 
 a_grid = list(range(-5, 6))
+# a_grid.reverse
+a_grid.remove(0)
+a_grid = [0] + a_grid
 
 s_min = theta - 5 * sigma / np.sqrt(2 * kappa)
 s_max = theta + 5 * sigma / np.sqrt(2 * kappa)
 Ns = 51;
 ds = (s_max - s_min) / (Ns - 1);
-s_grid = np.arange(s_min, s_max+ds/2, ds).tolist()
+s_grid = np.arange(s_min, s_max + ds / 2, ds).tolist()
+
+
+def randargmax(b):
+    return np.random.choice(np.flatnonzero(b == b.max()))
 
 
 # initialize q table
@@ -59,7 +63,6 @@ def init_q_table(size_s, size_T, size_q, size_a):
     """
 
     table = np.zeros([size_s, size_T + 1, size_q, size_a])
-    print(table)
     return table
 
 
@@ -70,18 +73,8 @@ def init_state_matrices():
     return s_matrix, q_matrix, a_matrix
 
 
-def adms_actions(q):
-    """
-    Initialize q table.
-
-    :param q: inventory
-    :type q: int
-    :return: admissible actions at inventory q
-    :rtype: list
-    """
-    lowerbound = max(-5, -10 - q)
-    upperbound = min(5, 10 - q)
-    return list(range(lowerbound, upperbound + 1))
+def init_r_matrix():
+    return np.zeros([niter, NT + 1])
 
 
 #
@@ -101,10 +94,9 @@ def get_action(s, T, q, q_table, epsilon):
     if (np.random.uniform() > epsilon):
         action = np.random.choice(adms_actions(q))
     else:
-        adms_act_index = np.where(np.isin(a_grid, adms_actions(q)))[0]
-        action_index_ = q_table[s_grid.index(s), T, q_grid.index(q), adms_act_index].argmax()
-        action_index = adms_act_index[action_index_]
-        action = a_grid[action_index]
+        action_sub_index = randargmax(q_table[s_grid.index(s), T, q_grid.index(q), adms_actions_indeces(q)])
+        # action_sub_index = np.argmax(q_table[s_grid.index(s), T, q_grid.index(q), adms_actions_indeces(q,a_grid)])
+        action = adms_actions(q)[action_sub_index]
     return action
 
 
@@ -119,7 +111,7 @@ def adms_actions(q):
     """
     lowerbound = max(-5, -10 - q)
     upperbound = min(5, 10 - q)
-    return list(range(lowerbound, upperbound + 1))
+    return [item for item in a_grid if (item >= lowerbound and item <= upperbound)]
 
 
 def adms_actions_indeces(q):
@@ -136,32 +128,40 @@ def adms_actions_indeces(q):
 
 def get_feedback(s, T, q, a):
     period_reward = 0
-    for t in range(1, dT + 1):
-        x = a / dT  # average order size per dt
+    q0 = q
+    x = a / dT  # average order size per dt
+    t = 1
+    while t < dT + 1:
         reward_, q, s = SimMRStep(s, q, x, kappa, theta, sigma, dt, phi)
         period_reward += reward_
-    return s_grid[abs(s - np.array(s_grid)).argmin()], int(q), period_reward
+        t += 1
+    return s_grid[abs(s - np.array(s_grid)).argmin()], q0 + a, period_reward
 
 
 def get_last_feedback(s, T, q, a):
     period_reward = 0
-    for t in range(1, dT + 1):
-        x = a / dT  # average order size per dt
-        reward_, q, s = SimMRStep(s, q, x, kappa, theta, sigma, dt, phi)  # last period gets penalized by 10 times
+    q0 = q
+    x = a / dT  # average order size per dt
+    t = 1
+    while t < dT + 1:
+        reward_, q, s = SimMRStep(s, q, x, kappa, theta, sigma, dt, phi)
         period_reward += reward_
+        t += 1
     reward_, q_, s_ = SimMRStep(s, q, x, kappa, theta, sigma, dt, phi)
-    terminal_reward = q * (s_- s) - c * phi * np.square(q_)
+    terminal_reward = q * (s_ - s) - c * phi * np.square(q)
     period_reward += terminal_reward
-    return s_grid[abs(s - np.array(s_grid)).argmin()], int(q), period_reward
+
+    return s_grid[abs(s - np.array(s_grid)).argmin()], q0 + a, period_reward
 
 
 def SimMRStep(S0, q0, x, kappa, theta, sigma, dt, phi):
     S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn();
-    #S1 = S0 + kappa*(theta-S0)* dt + sigma * np.sqrt(dt) * np.random.randn()
-    #x(i+1) = x(i)+th*(mu-x(i))*dt+sig*sqrt(dt)*randn
+    # S1 = S0 + kappa*(theta-S0)* dt + sigma * np.sqrt(dt) * np.random.randn()
+    # x(i+1) = x(i)+th*(mu-x(i))*dt+sig*sqrt(dt)*randn
     q1 = q0 + x;
-    #phi = 0;
-    reward = q1 * (S1 - S0) - phi * np.square(x);
+    # phi = 0;
+    # reward = q0 * (S1 - S0) - phi * np.square(x);
+    reward = x * (S1 - S0) - phi * np.square(x);
     return reward, q1, S1
 
 
@@ -169,11 +169,11 @@ def SimMRStep(S0, q0, x, kappa, theta, sigma, dt, phi):
 
 def q_learning():
     s_matrix, q_matrix, a_matrix = init_state_matrices()
+    r_matrix = init_r_matrix()
     q_table = init_q_table(len(s_grid), NT, len(q_grid), len(a_grid))
     for episode in range(int(niter)):
-        print('episode'+ str(episode))
-        epsilon = 1 - 1 /(1 + episode)  # greedy police
-        alpha = 1 /(1 + episode)
+        epsilon = 1 - max(1 / (1 + episode), 0.2)  # greedy police
+        alpha = 1 / (1 + episode)
         T = 0
         s = np.random.choice(s_grid)
         q = np.random.choice(q_grid)
@@ -190,6 +190,7 @@ def q_learning():
             s_matrix[episode, T] = s
             q_matrix[episode, T] = q
             a_matrix[episode, T] = a
+            r_matrix[episode, T] = r
             s = s_
             q = q_
             T += 1
@@ -204,19 +205,23 @@ def q_learning():
         s_matrix[episode, T] = s
         q_matrix[episode, T] = q
         a_matrix[episode, T] = a
+        r_matrix[episode, T] = r
         s_matrix[episode, T + 1] = s_
         q_matrix[episode, T + 1] = q_
 
         # s = s_
         # q = q_
-    return q_table, s_matrix, q_matrix, a_matrix
+    return q_table, s_matrix, q_matrix, a_matrix, r_matrix
+
 
 def get_optimal_actions(T):
-    optimal_action_table = np.zeros([len(s_grid),len(q_grid)])
-    for i in range (np.shape(q_table)[0]):
-        for j in range (np.shape(q_table)[2]):
-            optimal_action_table[i,j]= a_grid[np.argmax(q_table[:,T,:,:],axis=-1)[i,j]]
-    return pd.DataFrame(optimal_action_table, columns = q_grid, index=s_grid)
+    optimal_action_table = np.zeros([len(s_grid), len(q_grid)])
+    for i in range(np.shape(q_table)[0]):
+        for j in range(np.shape(q_table)[2]):
+            optimal_action_table[i, j] = adms_actions(q_grid[j])[
+                np.argmax(q_table[i, T, j, adms_actions_indeces(q_grid[j])])]
+            # optimal_action_table[i,j]= a_grid[np.argmax(q_table[:,T,:,:],axis=-1)[i,j]]
+    return pd.DataFrame(optimal_action_table, columns=q_grid, index=s_grid)
 
 
 def plot_actions(T):
@@ -232,9 +237,7 @@ def plot_actions(T):
     plt.show()
 
 
-
 if __name__ == '__main__':
-    q_table, s_matrix, q_matrix, a_matrix = q_learning()
-    plt.hist(q_matrix[:-1,-1])
-    plt.xlabel("frequency")
-    plt.ylabel("terminal inventory")
+    q_table, s_matrix, q_matrix, a_matrix, r_matrix = q_learning()
+    plt.hist(q_matrix[:-1, -1])
+    plt.ylabel("frequency")
