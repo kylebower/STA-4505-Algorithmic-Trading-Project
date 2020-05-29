@@ -4,7 +4,6 @@
 """
 import numpy as np
 import matplotlib.pyplot as plt
-import random
 import pandas as pd
 import seaborn as sns
 
@@ -22,22 +21,22 @@ dT = 60  # decisions are made at each dT
 kappa = 1  # second time scale
 theta = 1
 sigma = 0.02
-phi = 0.000001;
-c = 1000;
+phi = 0.000001
+c = 1000
 
-Qmax = 10;
-Qmin = -10;
+Qmax = 10  # max inventory
+Qmin = -10  # min inventory
 q_grid = list(range(Qmin, Qmax + 1))
 
-a_grid = list(range(-5, 6))
+a_grid = list(range(-5, 6))  # actions
 # a_grid.reverse
 a_grid.remove(0)
 a_grid = [0] + a_grid
 
-s_min = theta - 5 * sigma / np.sqrt(2 * kappa)
-s_max = theta + 5 * sigma / np.sqrt(2 * kappa)
-Ns = 51;
-ds = (s_max - s_min) / (Ns - 1);
+s_min = theta - 5 * sigma / np.sqrt(2 * kappa)  # min price
+s_max = theta + 5 * sigma / np.sqrt(2 * kappa)  # max price
+Ns = 51
+ds = (s_max - s_min) / (Ns - 1)
 s_grid = np.arange(s_min, s_max + ds / 2, ds).tolist()
 
 
@@ -85,13 +84,17 @@ def get_action(s, T, q, q_table, epsilon):
     :param s: spot price
     :param T: trading period
     :param q: inventory
+    :param q_table: table of Q values
+    :param epsilon: greedy policy
     :type s: float
     :type T: int
     :type q: int
+    :type q_table: numpy.ndarray
+    :type epsilon: float
     :return: epsilon_greedy action
     :rtype: int
     """
-    if (np.random.uniform() > epsilon):
+    if np.random.uniform() > epsilon:
         action = np.random.choice(adms_actions(q))
     else:
         action_sub_index = randargmax(q_table[s_grid.index(s), T, q_grid.index(q), adms_actions_indeces(q)])
@@ -111,7 +114,7 @@ def adms_actions(q):
     """
     lowerbound = max(-5, -10 - q)
     upperbound = min(5, 10 - q)
-    return [item for item in a_grid if (item >= lowerbound and item <= upperbound)]
+    return [item for item in a_grid if (lowerbound <= item <= upperbound)]
 
 
 def adms_actions_indeces(q):
@@ -154,19 +157,19 @@ def get_last_feedback(s, T, q, a):
     return s_grid[abs(s - np.array(s_grid)).argmin()], q0 + a, period_reward
 
 
+# simulate one mean recursion step
 def SimMRStep(S0, q0, x, kappa, theta, sigma, dt, phi):
-    S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn();
+    S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn()
     # S1 = S0 + kappa*(theta-S0)* dt + sigma * np.sqrt(dt) * np.random.randn()
     # x(i+1) = x(i)+th*(mu-x(i))*dt+sig*sqrt(dt)*randn
-    q1 = q0 + x;
-    # phi = 0;
-    # reward = q0 * (S1 - S0) - phi * np.square(x);
-    reward = x * (S1 - S0) - phi * np.square(x);
+    q1 = q0 + x
+    # phi = 0
+    # reward = q0 * (S1 - S0) - phi * np.square(x)
+    reward = x * (S1 - S0) - phi * np.square(x)
     return reward, q1, S1
 
 
 # define epsilon-greedy q learning for optimal execution
-
 def q_learning():
     s_matrix, q_matrix, a_matrix = init_state_matrices()
     r_matrix = init_r_matrix()
