@@ -171,6 +171,12 @@ def SimMRStep(S0, q0, x, kappa, theta, sigma, dt, phi):
     return reward, q1, S1
 
 
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return array[idx]
+
+
 # define epsilon-greedy q learning for optimal execution
 def q_learning():
     s_matrix, q_matrix, a_matrix = init_state_matrices()
@@ -180,8 +186,10 @@ def q_learning():
         epsilon = epsilon_a / (epsilon_b + episode)  # greedy policy
         alpha = alpha_a / (alpha_b + episode)
         T = 0
-        s = np.random.choice(s_grid)  # initial price
-        q = np.random.choice(q_grid)  # should set this to 0
+        # s = np.random.choice(s_grid)  # initial price
+        s = np.random.normal(theta, sigma/np.sqrt(2 * kappa), 1)
+        s = find_nearest(s_grid, s)
+        q = 0  #np.random.choice(q_grid)  # should set this to 0
         while T < NT - 1:
             a = get_action(s, T, q, q_table, epsilon)  # choose epsilon-greedy action
             s_, q_, r = get_feedback(s, T, q, a)  # get next state and the current reward
