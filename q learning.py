@@ -10,17 +10,17 @@ import seaborn as sns
 np.random.seed(1)
 
 # global variables
-epsilon = 0.9  # greedy police
-alpha = 0.1  # learning rate
-gamma = 0.9  # discount factor
+epsilon = 0.9  # initial greedy police
+alpha = 0.1  # initial learning rate
+gamma = 0.999  # discount factor
 niter = int(1e4)
 NT = int(10)  # 10 periods
 dt = 1  # send child order each dt
 dT = 60  # decisions are made at each dT
 
-kappa = 1  # second time scale
+kappa = 1/60  # second time scale
 theta = 1
-sigma = 0.02
+sigma = 0.02/np.sqrt(60)
 phi = 0.000001
 c = 1000
 
@@ -179,7 +179,7 @@ def q_learning():
         alpha = 1 / (1 + episode)
         T = 0
         s = np.random.choice(s_grid)
-        q = np.random.choice(q_grid)
+        q = np.random.choice(q_grid)  # should set this to 0
         while T < NT - 1:
             a = get_action(s, T, q, q_table, epsilon)  # choose epsilon-greedy action
             s_, q_, r = get_feedback(s, T, q, a)  # get next state and the current reward
