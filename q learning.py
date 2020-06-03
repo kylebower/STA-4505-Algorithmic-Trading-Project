@@ -166,8 +166,8 @@ def SimMRStep(S0, q0, x, kappa, theta, sigma, dt, phi):
     # x(i+1) = x(i)+th*(mu-x(i))*dt+sig*sqrt(dt)*randn
     q1 = q0 + x
     # phi = 0
-    # reward = q0 * (S1 - S0) - phi * np.square(x)
-    reward = x * (S1 - S0) - phi * np.square(x)
+    reward = q0 * (S1 - S0) - phi * np.square(x)
+    # reward = x * (S1 - S0) - phi * np.square(x)
     return reward, q1, S1
 
 
@@ -255,3 +255,7 @@ if __name__ == '__main__':
     plt.hist(q_matrix[:-1, -1])
     plt.ylabel("frequency")
     plt.show()
+    plot_actions(0)
+    plot_actions(1)
+    plot_actions(5)
+    plot_actions(9)
