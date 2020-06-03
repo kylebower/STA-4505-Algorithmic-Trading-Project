@@ -10,17 +10,19 @@ import seaborn as sns
 np.random.seed(1)
 
 # global variables
-epsilon = 0.9  # initial greedy police
-alpha = 0.1  # initial learning rate
+epsilon_a = 100  # greedy policy is epsilon_a/(epsilon_b+k)
+epsilon_b = 100
+alpha_a = 1000  # learning rate is alpha_a/(alpha_b+k)
+alpha_b = 1000
 gamma = 0.999  # discount factor
-niter = int(1e4)
+niter = int(1e4)  # number of iterations
 NT = int(10)  # 10 periods
 dt = 1  # send child order each dt
 dT = 60  # decisions are made at each dT
 
-kappa = 1/60  # second time scale
+kappa = 1/60  # second time scale: order 1/dT
 theta = 1
-sigma = 0.02/np.sqrt(60)
+sigma = 0.02/np.sqrt(60)  # order 1/sqrt(dT)
 phi = 0.000001
 c = 1000
 
@@ -35,7 +37,7 @@ a_grid = [0] + a_grid
 
 s_min = theta - 5 * sigma / np.sqrt(2 * kappa)  # min price
 s_max = theta + 5 * sigma / np.sqrt(2 * kappa)  # max price
-Ns = 51
+Ns = 51  # number of prices
 ds = (s_max - s_min) / (Ns - 1)
 s_grid = np.arange(s_min, s_max + ds / 2, ds).tolist()
 
@@ -94,7 +96,7 @@ def get_action(s, T, q, q_table, epsilon):
     :return: epsilon_greedy action
     :rtype: int
     """
-    if np.random.uniform() > epsilon:
+    if np.random.uniform() < epsilon:
         action = np.random.choice(adms_actions(q))
     else:
         action_sub_index = randargmax(q_table[s_grid.index(s), T, q_grid.index(q), adms_actions_indeces(q)])
@@ -175,10 +177,10 @@ def q_learning():
     r_matrix = init_r_matrix()
     q_table = init_q_table(len(s_grid), NT, len(q_grid), len(a_grid))
     for episode in range(int(niter)):
-        epsilon = 1 - max(1 / (1 + episode), 0.2)  # greedy police
-        alpha = 1 / (1 + episode)
+        epsilon = epsilon_a / (epsilon_b + episode)  # greedy policy
+        alpha = alpha_a / (alpha_b + episode)
         T = 0
-        s = np.random.choice(s_grid)
+        s = np.random.choice(s_grid)  # initial price
         q = np.random.choice(q_grid)  # should set this to 0
         while T < NT - 1:
             a = get_action(s, T, q, q_table, epsilon)  # choose epsilon-greedy action
