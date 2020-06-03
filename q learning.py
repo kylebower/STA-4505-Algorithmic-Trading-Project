@@ -254,3 +254,4 @@ if __name__ == '__main__':
     q_table, s_matrix, q_matrix, a_matrix, r_matrix = q_learning()
     plt.hist(q_matrix[:-1, -1])
     plt.ylabel("frequency")
+    plt.show()
