@@ -4,10 +4,11 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 
-#Create Deep Q Network Class (In this case 2 fully connected layers with intermediate ReLu activation)
-#MSE loss function
-#Will use GPU if available otherwise CPU
-#Adam Optimizer
+
+# Create Deep Q Network Class (In this case 2 fully connected layers with intermediate ReLu activation)
+# MSE loss function
+# Will use GPU if available otherwise CPU
+# Adam Optimizer
 class DeepQNetwork(nn.Module):
     def __init__(self, lr, input_dims, fc1_dims, fc2_dims,
                  n_actions):
@@ -32,11 +33,12 @@ class DeepQNetwork(nn.Module):
 
         return actions
 
-#Creates Replay Buffer Class
-#General version of Replay Buffer that stores transitions up to a maximum memory size
-#If memory is full it cycles through and replaces old data
-#Can sample a given batch size from memory
-class ReplayBuffer():
+
+# Creates Replay Buffer Class
+# General version of Replay Buffer that stores transitions up to a maximum memory size
+# If memory is full it cycles through and replaces old data
+# Can sample a given batch size from memory
+class ReplayBuffer:
     def __init__(self, max_size, input_shape, n_actions):
         self.mem_size = max_size
         self.mem_cntr = 0
@@ -69,12 +71,13 @@ class ReplayBuffer():
 
         return states, actions, rewards, states_, dones
 
-#Creates Agent class
-#Implements DDQ Learning
-#Takes input parameters, currently decays epsilon linearly up to a fixed minimum
-#Agent class manages action selection, epsilon update, transition storage, memory sampling, and learning updates
-#replace gives the number of learning steps before replacing target network
-class Agent():
+
+# Creates Agent class
+# Implements DDQ Learning
+# Takes input parameters, currently decays epsilon linearly up to a fixed minimum
+# Agent class manages action selection, epsilon update, transition storage, memory sampling, and learning updates
+# replace gives the number of learning steps before replacing target network
+class Agent:
     def __init__(self, gamma, epsilon, lr, n_actions, input_dims,
                  mem_size, batch_size, eps_min=0.01, eps_dec=5e-7,
                  replace=1000, fc1_dims=64, fc2_dims=64):
@@ -95,10 +98,10 @@ class Agent():
         self.memory = ReplayBuffer(mem_size, input_dims, n_actions)
 
         self.q_eval = DeepQNetwork(self.lr, self.input_dims, self.fc1_dims, self.fc2_dims,
-                 self.n_actions)
+                                   self.n_actions)
 
         self.q_next = DeepQNetwork(self.lr, self.input_dims, self.fc1_dims, self.fc2_dims,
-                 self.n_actions)
+                                   self.n_actions)
 
     def choose_action(self, observation):
         if np.random.random() > self.epsilon:
