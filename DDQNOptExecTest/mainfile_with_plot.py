@@ -47,7 +47,7 @@ if __name__ == '__main__':
                 observation = T.tensor([float(i), float(k) - 10, 0.8 + (float(j) - 1) * 0.4 / 21], dtype=T.float)
                 q_eval = agent.q_eval.forward(observation)
                 Q[k, j] = q_eval.argmax() - 5
-                return Q
+        return Q
     yticklabels = np.round(np.arange(0.8, 1.2, 0.4 / 21), 3)
     cmap = sns.diverging_palette(20, 240, as_cmap=True)  # husl color system
     heat_map = sns.heatmap(get_optimal_actions(1), cmap=cmap, yticklabels=yticklabels, vmin=-5, vmax=5)
