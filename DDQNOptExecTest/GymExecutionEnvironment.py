@@ -1,14 +1,14 @@
 import numpy as np
 
 class env():
-    def __init__(self,pricemin,pricemax,dt=1):
+    def __init__(self, pricemin, pricemax, dt=1):
         self.dt = dt
         self.smin = pricemin
         self.smax = pricemax
-        self.state_s =  np.random.uniform(low=self.smin, high=self.smax)
+        self.state_s = np.random.uniform(low=self.smin, high=self.smax)
         self.state_T = 0
         self.state_q = 0
-        self.NT=10
+        self.NT = 10
         self.kappa = 1
         self.theta = 1
         self.sigma = 0.02
@@ -25,7 +25,8 @@ class env():
 
     def step(self, action):
         x = action
-        reward_, q_, s_ = self.SimMRStep(S0=self.state_s, q0=self.state_q, x=x-5, kappa=self.kappa, theta=self.theta, sigma=self.sigma, dt=self.dt, phi=self.phi)
+        reward_, q_, s_ = self.SimMRStep(S0=self.state_s, q0=self.state_q, x=x-5, kappa=self.kappa, theta=self.theta,
+                                         sigma=self.sigma, dt=self.dt, phi=self.phi)
 
         lowerbound = max(-5, -10 - self.state_q)+5
         upperbound = min(5, 10 - self.state_q)+5
@@ -33,12 +34,10 @@ class env():
         self.state_q = q_
         self.state_s = s_
 
-        if x < lowerbound:
-            reward_ = -self.big_num
-        if x > upperbound:
+        if x < lowerbound or x > upperbound:
             reward_ = -self.big_num
 
-        if self.state_T < self.NT- 1:
+        if self.state_T < self.NT - 1:
             done = False
             self.state_T += 1
             return np.array([self.state_T, q_, s_]), reward_, done
