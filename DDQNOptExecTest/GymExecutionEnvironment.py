@@ -25,10 +25,10 @@ class env():
 
     def step(self, action):
         x = action
-        reward_, q_, s_ = self.SimMRStep(S0=self.state_s, q0=self.state_q, x=x-6, kappa=self.kappa, theta=self.theta, sigma=self.sigma, dt=self.dt, phi=self.phi)
+        reward_, q_, s_ = self.SimMRStep(S0=self.state_s, q0=self.state_q, x=x-5, kappa=self.kappa, theta=self.theta, sigma=self.sigma, dt=self.dt, phi=self.phi)
 
-        lowerbound = max(-5, -10 - self.state_q)+6
-        upperbound = min(5, 10 - self.state_q)+6
+        lowerbound = max(-5, -10 - self.state_q)+5
+        upperbound = min(5, 10 - self.state_q)+5
 
         self.state_q = q_
         self.state_s = s_
