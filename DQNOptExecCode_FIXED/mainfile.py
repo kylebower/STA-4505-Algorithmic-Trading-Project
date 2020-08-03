@@ -38,6 +38,9 @@ if __name__ == '__main__':
               'epsilon %.2f' % agent.epsilon)
 
     NT = 10
+    kappa = 1
+    theta = 1
+    sigma = 0.02
     smin = theta - 3 * sigma / np.sqrt(2 * kappa)  # min price
     smax = theta + 3 * sigma / np.sqrt(2 * kappa)  # max price
     invgrid = 21
