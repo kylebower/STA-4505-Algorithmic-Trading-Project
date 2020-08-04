@@ -1,8 +1,9 @@
 import numpy as np
 
 class env():
-    def __init__(self,pricemin,pricemax,dt=1):
+    def __init__(self,pricemin,pricemax,dt=1,dT=5):
         self.dt = dt
+        self.dT = dT
         self.state_T = 0
         self.state_q = 0
         self.NT = 10
@@ -24,23 +25,31 @@ class env():
         return np.array([self.state_T, self.state_q, self.state_s])
 
     def step(self, action):
-        x = action
-
-        reward_, q_, s_ = self.SimMRStep(S0=self.state_s, q0=self.state_q, x=x-5, kappa=self.kappa, theta=self.theta, sigma=self.sigma, dt=self.dt, phi=self.phi)
-
-        self.state_q = q_
-        self.state_s = s_
-
-        if self.state_T < self.NT- 1:
+        x = (action - 5)/self.dT
+        t = 1
+        q0 = self.state_q
+        period_reward = 0
+        while t < self.dT + 1:
+            reward_, q_, s_ = self.SimMRStep(S0=self.state_s, q0=self.state_q, x=x, kappa=self.kappa, theta=self.theta, sigma=self.sigma, dt=self.dt, phi=self.phi)
+            self.state_q = q_
+            self.state_s = s_
+            period_reward += reward_
+            t += 1
+        if self.state_T < self.NT-1:
             done = False
             self.state_T += 1
-            return np.array([self.state_T, q_, s_]), reward_, done
+            return np.array([self.state_T,  self.state_q, self.state_s]), period_reward, done
         else:
             done = True
-            terminal_reward = - self.c * np.square(q_)
-            reward_ += terminal_reward
+            reward_, q_, s_ = self.SimMRStep(S0=self.state_s, q0=self.state_q, x=x, kappa=self.kappa, theta=self.theta, sigma=self.sigma, dt=self.dt, phi=self.phi)
+            terminal_reward = self.state_q * (s_ - self.state_s) -self.c * np.square(self.state_q)
+            period_reward += terminal_reward
+            self.state_s = s_
+            self.state_q = 0
             self.state_T += 1
-            return np.array([self.state_T, q_, s_]), reward_, done
+            return np.array([self.state_T,  self.state_q, self.state_s]), period_reward, done
+
+
 
     def SimMRStep(self, S0, q0, x, kappa, theta, sigma, dt, phi):
         S1 = theta + (S0 - theta) * np.exp(-kappa * dt) + sigma * np.sqrt(dt) * np.random.randn()
