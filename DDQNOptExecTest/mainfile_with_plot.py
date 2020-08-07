@@ -5,6 +5,8 @@ import numpy as np
 import GymExecutionEnvironment as EEnv
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import torch as T
 
 if __name__ == '__main__':
     env = EEnv.env(pricemin=0.8, pricemax=1.2, dt=1)
@@ -12,7 +14,7 @@ if __name__ == '__main__':
                   batch_size=64, eps_min=0.01, eps_dec=5e-6, replace=1000, fc1_dims=64,
                   fc2_dims=64)
     scores, eps_history = [], []
-    n_games = 20000
+    n_games = 1000
 
     for i in range(n_games):
         score = 0
@@ -48,10 +50,34 @@ if __name__ == '__main__':
                 q_eval = agent.q_eval.forward(observation)
                 Q[k, j] = q_eval.argmax() - 5
         return Q
-    yticklabels = np.round(np.arange(0.8, 1.2, 0.4 / 21), 3)
+
+    plt.clf()
+    # xticklabels = np.arange(-10, 11, 1)
+    # yticklabels = np.round(np.arange(0.8, 1.2, 0.4 / 21), 3)
+    # yticks = np.round(np.arange(0.8, 1.2, 0.1), 1)
     cmap = sns.diverging_palette(20, 240, as_cmap=True)  # husl color system
-    heat_map = sns.heatmap(get_optimal_actions(1), cmap=cmap, yticklabels=yticklabels, vmin=-5, vmax=5)
-    heat_map.invert_yaxis()
-    plt.xlabel("Inventory")
-    plt.ylabel("Price")
-    plt.show()
+
+    for i in range(11):
+        FONT_SIZE = 14
+        plt.rc('axes', labelsize=FONT_SIZE)  # fontsize of the x and y labels
+        plt.rc('xtick', labelsize=FONT_SIZE)  # fontsize of the x tick labels
+        plt.rc('ytick', labelsize=FONT_SIZE)  # fontsize of the y tick labels
+
+        num_xticks = 5
+        num_yticks = 5
+        data = get_optimal_actions(i)
+        xticks = np.linspace(0, len(data) - 1, num_xticks, dtype=np.int)
+        yticks = np.linspace(0, len(data) - 1, num_yticks, dtype=np.int)
+        xticklabels = xticks - 10
+        yticklabels = np.round(yticks * 0.02 + 0.8, 2)
+
+        heat_map = sns.heatmap(data, cmap=cmap, xticklabels=xticklabels,  yticklabels=yticklabels,  vmin=-5, vmax=5)
+        heat_map.set_xticks(xticks)
+        heat_map.set_yticks(yticks)
+
+        heat_map.invert_yaxis()
+        plt.xlabel("Inventory")
+        plt.ylabel("Price")
+
+        plt.show()
+
