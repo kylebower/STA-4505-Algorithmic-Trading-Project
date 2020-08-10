@@ -14,7 +14,7 @@ if __name__ == '__main__':
                   batch_size=64, eps_min=0.01, eps_dec=5e-6, replace=1000, fc1_dims=64,
                   fc2_dims=64)
     scores, eps_history = [], []
-    n_games = 1000
+    n_games = 10
 
     for i in range(n_games):
         score = 0
@@ -69,7 +69,9 @@ if __name__ == '__main__':
         xticks = np.linspace(0, len(data) - 1, num_xticks, dtype=np.int)
         yticks = np.linspace(0, len(data) - 1, num_yticks, dtype=np.int)
         xticklabels = xticks - 10
-        yticklabels = np.round(yticks * 0.02 + 0.8, 2)
+        smin = 0.8
+        smax = 1.2
+        yticklabels = np.round(yticks * (smax-smin) / (len(data)-1) + smin, 2)
 
         heat_map = sns.heatmap(data, cmap=cmap, xticklabels=xticklabels,  yticklabels=yticklabels,  vmin=-5, vmax=5)
         heat_map.set_xticks(xticks)
