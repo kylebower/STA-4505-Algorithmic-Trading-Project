@@ -8,7 +8,7 @@ import torch as T
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    env = EEnv.env(pricemin=0.8, pricemax=1.2, dt=1, dT=60)
+    env = EEnv.env(dt=1, dT=60)
     agent = Agent(gamma=0.999, epsilon=1.0, lr=0.001, n_actions=11, input_dims=[3], mem_size=25000,
                   batch_size=64, eps_min=0.05, eps_dec=1e-7, replace=5000, fc1_dims=64,
                   fc2_dims=64)
