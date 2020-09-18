@@ -1,7 +1,7 @@
 import numpy as np
 
 class env():
-    def __init__(self,pricemin,pricemax,dt=1,dT=60):
+    def __init__(self,dt=1,dT=60):
         self.dt = dt
         self.dT = dT
         self.state_T = 0
